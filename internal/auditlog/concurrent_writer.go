@@ -87,10 +87,11 @@ func (cl concurrentWriter) Write(al plugintypes.AuditLog) error {
 	cl.log.Printf("%s %s - - [%s]", al.Transaction().ClientIP(), al.Transaction().HostIP(), al.Transaction().Timestamp())
 	if al.Transaction().HasRequest() {
 		cl.log.Printf(
-			` "%s %s %s"`,
+			` "%s %s %s %s"`,
 			al.Transaction().Request().Method(),
 			al.Transaction().Request().URI(),
-			al.Transaction().Request().HTTPVersion())
+			al.Transaction().Request().HTTPVersion(),
+			al.Transaction().Request().Scheme())
 	}
 	if al.Transaction().HasResponse() {
 		cl.log.Printf(` %d`, al.Transaction().Response().Status())

@@ -42,6 +42,7 @@ func (i *rwInterceptor) WriteHeader(statusCode int) {
 	}
 
 	i.statusCode = statusCode
+	//		i.w.WriteHeader(statusCode)
 	if it := i.tx.ProcessResponseHeaders(statusCode, i.proto); it != nil {
 		i.Header().Set("Content-Length", "0")
 		i.statusCode = obtainStatusCodeFromInterruptionOrDefault(it, i.statusCode)

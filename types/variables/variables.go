@@ -80,6 +80,8 @@ const (
 	RequestMethod = variables.RequestMethod
 	// RequestProtocol is the protocol used in the request
 	RequestProtocol = variables.RequestProtocol
+	// RequestScheme is the http or https version used in the request
+	RequestScheme = variables.RequestScheme
 	// RequestURI holds the full request URL including the query string data without
 	// the domain name
 	RequestURI = variables.RequestURI

@@ -38,7 +38,7 @@ func TestRequestBodyAccessOn(t *testing.T) {
 		t.Fatal(err)
 	}
 	tx := waf.NewTransaction()
-	tx.ProcessURI("/", "POST", "http/1.1")
+	tx.ProcessURI("/", "POST", "http/1.1", "HTTP")
 	if _, _, err := tx.WriteRequestBody([]byte("test=123")); err != nil {
 		t.Error(err)
 	}

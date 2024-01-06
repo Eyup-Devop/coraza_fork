@@ -66,6 +66,7 @@ func TestTxSetters(t *testing.T) {
 
 	validateMacroExpansion(exp, tx, t)
 }
+
 func TestTxMultipart(t *testing.T) {
 	tx := NewWAF().NewTransaction()
 	body := []string{
@@ -242,10 +243,8 @@ func TestWriteRequestBody(t *testing.T) {
 							_ = tx.Close()
 						})
 					}
-
 				})
 			}
-
 		})
 	}
 }
@@ -536,10 +535,8 @@ func TestWriteResponseBody(t *testing.T) {
 							_ = tx.Close()
 						})
 					}
-
 				})
 			}
-
 		})
 	}
 }
@@ -706,7 +703,6 @@ func TestRelevantAuditLogging(t *testing.T) {
 }
 
 func TestLogCallback(t *testing.T) {
-
 	testCases := []struct {
 		name            string
 		engineStatus    types.RuleEngineStatus
@@ -1169,7 +1165,7 @@ func TestTxProcessURI(t *testing.T) {
 	waf := NewWAF()
 	tx := waf.NewTransaction()
 	uri := "http://example.com/path/to/file.html?query=string&other=value"
-	tx.ProcessURI(uri, "GET", "HTTP/1.1")
+	tx.ProcessURI(uri, "GET", "HTTP/1.1", "HTTP")
 	if s := tx.variables.requestURI.Get(); s != uri {
 		t.Errorf("failed to set request uri, got %s", s)
 	}

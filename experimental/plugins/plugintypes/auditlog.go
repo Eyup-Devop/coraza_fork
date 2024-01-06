@@ -6,6 +6,7 @@ package plugintypes
 import (
 	"io/fs"
 
+	"github.com/IBM/sarama"
 	"github.com/corazawaf/coraza/v3/types"
 )
 
@@ -23,6 +24,7 @@ type AuditLogTransaction interface {
 	ID() string
 	ClientIP() string
 	ClientPort() int
+	GeoIPInformation() AuditLogGeoIPInformation
 	HostIP() string
 	HostPort() int
 	ServerID() string
@@ -31,6 +33,18 @@ type AuditLogTransaction interface {
 	Response() AuditLogTransactionResponse
 	HasResponse() bool
 	Producer() AuditLogTransactionProducer
+}
+
+// AuditLogGeoIPInformation contains GeoIP specific information
+type AuditLogGeoIPInformation interface {
+	CountryCode() string
+	CountryName() string
+	Continent() string
+	Subdivision() string
+	City() string
+	PostalCode() string
+	Latitude() string
+	Longitude() string
 }
 
 // AuditLogTransactionResponse contains response specific information
@@ -58,6 +72,7 @@ type AuditLogTransactionRequest interface {
 	Protocol() string
 	URI() string
 	HTTPVersion() string
+	Scheme() string
 	Headers() map[string][]string
 	Body() string
 	Files() []AuditLogTransactionRequestFiles
@@ -111,6 +126,15 @@ type AuditLogConfig struct {
 
 	// Formatter is the formatter to use when writing formatted audit logs.
 	Formatter AuditLogFormatter
+
+	// Broker is the Kafka producer to use when writing formatted audit logs.
+	Broker sarama.AsyncProducer
+
+	// Topic is the Kafka topic to use when writing formatted audit logs.
+	Topic string
+
+	// DomainName is the domain name to use when writing formatted audit logs.
+	DomainName string
 }
 
 // AuditLogWriter is the interface for all log writers.

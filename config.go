@@ -6,6 +6,7 @@ package coraza
 import (
 	"io/fs"
 
+	"github.com/IBM/sarama"
 	"github.com/corazawaf/coraza/v3/debuglog"
 	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
 	"github.com/corazawaf/coraza/v3/internal/corazawaf"
@@ -63,6 +64,12 @@ type WAFConfig interface {
 
 	// WithRootFS configures the root file system.
 	WithRootFS(fs fs.FS) WAFConfig
+
+	// WithGeoIP2 configures the geoip2 database reader.
+	WithGeoIP2(geoip string) WAFConfig
+
+	// WithAuditLogWriter configures the redpanda broker information.
+	WithBrokerConfig(broker sarama.AsyncProducer, topic string, domainName string) WAFConfig
 }
 
 // NewWAFConfig creates a new WAFConfig with the default settings.
@@ -105,6 +112,10 @@ type wafConfig struct {
 	debugLogger              debuglog.Logger
 	errorCallback            func(rule types.MatchedRule)
 	fsRoot                   fs.FS
+	geoip2file               string
+	broker                   sarama.AsyncProducer
+	topic                    string
+	domainName               string
 }
 
 func (c *wafConfig) WithRules(rules ...*corazawaf.Rule) WAFConfig {
@@ -158,6 +169,20 @@ func (c *wafConfig) WithErrorCallback(logger func(rule types.MatchedRule)) WAFCo
 func (c *wafConfig) WithRootFS(fs fs.FS) WAFConfig {
 	ret := c.clone()
 	ret.fsRoot = fs
+	return ret
+}
+
+func (c *wafConfig) WithGeoIP2(geoip2 string) WAFConfig {
+	ret := c.clone()
+	ret.geoip2file = geoip2
+	return ret
+}
+
+func (c *wafConfig) WithBrokerConfig(broker sarama.AsyncProducer, topic string, domainName string) WAFConfig {
+	ret := c.clone()
+	ret.broker = broker
+	ret.topic = topic
+	ret.domainName = domainName
 	return ret
 }
 

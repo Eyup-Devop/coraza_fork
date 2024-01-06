@@ -21,6 +21,7 @@ import (
 	stringutils "github.com/corazawaf/coraza/v3/internal/strings"
 	"github.com/corazawaf/coraza/v3/internal/sync"
 	"github.com/corazawaf/coraza/v3/types"
+	"github.com/oschwald/geoip2-golang"
 )
 
 // WAF instance is used to store configurations and rules
@@ -131,6 +132,9 @@ type WAF struct {
 
 	// Configures the maximum number of ARGS that will be accepted for processing.
 	ArgumentLimit int
+
+	// Getting Ip Informations
+	GeoLookupDB *geoip2.Reader
 }
 
 // NewTransaction Creates a new initialized transaction for this WAF instance
@@ -240,7 +244,7 @@ func resolveLogPath(path string) (io.Writer, error) {
 		return os.Stderr, nil
 	}
 
-	return os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	return os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
 }
 
 // SetDebugLogPath sets the path for the debug log

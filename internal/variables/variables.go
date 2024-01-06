@@ -80,6 +80,8 @@ const (
 	RequestMethod
 	// RequestProtocol is the protocol used in the request
 	RequestProtocol
+	// RequestScheme is the Http or Https used in the request
+	RequestScheme
 	// RequestURI holds the full request URL including the query string data without
 	// the domain name
 	RequestURI

@@ -160,7 +160,7 @@ func (t *Test) SetResponseBody(body interface{}) error {
 // RunPhases runs the phases of the test from 1 to 5
 func (t *Test) RunPhases() error {
 	t.transaction.ProcessConnection(t.RequestAddress, t.RequestPort, t.ServerAddress, t.ServerPort)
-	t.transaction.ProcessURI(t.RequestURI, t.RequestMethod, t.RequestProtocol)
+	t.transaction.ProcessURI(t.RequestURI, t.RequestMethod, t.RequestProtocol, "HTTP")
 	for k, v := range t.RequestHeaders {
 		t.transaction.AddRequestHeader(k, v)
 	}

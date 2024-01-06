@@ -77,13 +77,14 @@ type Transaction struct {
 	// Client IP Address string representation
 	ClientIP_ string `json:"client_ip"`
 
-	ClientPort_ int                  `json:"client_port"`
-	HostIP_     string               `json:"host_ip"`
-	HostPort_   int                  `json:"host_port"`
-	ServerID_   string               `json:"server_id"`
-	Request_    *TransactionRequest  `json:"request,omitempty"`
-	Response_   *TransactionResponse `json:"response,omitempty"`
-	Producer_   *TransactionProducer `json:"producer,omitempty"`
+	ClientPort_       int                  `json:"client_port"`
+	GeoIPInformation_ *GeoIPInformation    `json:"geoip_information,omitempty"`
+	HostIP_           string               `json:"host_ip"`
+	HostPort_         int                  `json:"host_port"`
+	ServerID_         string               `json:"server_id"`
+	Request_          *TransactionRequest  `json:"request,omitempty"`
+	Response_         *TransactionResponse `json:"response,omitempty"`
+	Producer_         *TransactionProducer `json:"producer,omitempty"`
 }
 
 var _ plugintypes.AuditLogTransaction = Transaction{}
@@ -106,6 +107,10 @@ func (t Transaction) ClientIP() string {
 
 func (t Transaction) ClientPort() int {
 	return t.ClientPort_
+}
+
+func (t Transaction) GeoIPInformation() plugintypes.AuditLogGeoIPInformation {
+	return t.GeoIPInformation_
 }
 
 func (t Transaction) HostIP() string {
@@ -138,6 +143,51 @@ func (t Transaction) Response() plugintypes.AuditLogTransactionResponse {
 
 func (t Transaction) Producer() plugintypes.AuditLogTransactionProducer {
 	return t.Producer_
+}
+
+type GeoIPInformation struct {
+	CountryCode_ string `json:"country_code,omitempty"`
+	CountryName_ string `json:"country_name,omitempty"`
+	Continent_   string `json:"continent,omitempty"`
+	Subdivision_ string `json:"subdivision,omitempty"`
+	City_        string `json:"city,omitempty"`
+	PostalCode_  string `json:"postal_code,omitempty"`
+	Latitude_    string `json:"latitude,omitempty"`
+	Longitude_   string `json:"longitude,omitempty"`
+}
+
+var _ plugintypes.AuditLogGeoIPInformation = (*GeoIPInformation)(nil)
+
+func (tGeo *GeoIPInformation) CountryCode() string {
+	return tGeo.CountryCode_
+}
+
+func (tGeo *GeoIPInformation) CountryName() string {
+	return tGeo.CountryName_
+}
+
+func (tGeo *GeoIPInformation) Continent() string {
+	return tGeo.Continent_
+}
+
+func (tGeo *GeoIPInformation) Subdivision() string {
+	return tGeo.Subdivision_
+}
+
+func (tGeo *GeoIPInformation) City() string {
+	return tGeo.City_
+}
+
+func (tGeo *GeoIPInformation) PostalCode() string {
+	return tGeo.PostalCode_
+}
+
+func (tGeo *GeoIPInformation) Latitude() string {
+	return tGeo.Latitude_
+}
+
+func (tGeo *GeoIPInformation) Longitude() string {
+	return tGeo.Longitude_
 }
 
 // TransactionResponse contains response specific
@@ -226,7 +276,8 @@ type TransactionRequest struct {
 	Method_      string                                        `json:"method"`
 	Protocol_    string                                        `json:"protocol"`
 	URI_         string                                        `json:"uri"`
-	HTTPVersion_ string                                        `json:"http_version"`
+	HTTPVersion_ string                                        `json:"http_version,omitempty"`
+	Scheme_      string                                        `json:"scheme"`
 	Headers_     map[string][]string                           `json:"headers"`
 	Body_        string                                        `json:"body"`
 	Files_       []plugintypes.AuditLogTransactionRequestFiles `json:"files"`
@@ -260,6 +311,13 @@ func (tr *TransactionRequest) HTTPVersion() string {
 		return ""
 	}
 	return tr.HTTPVersion_
+}
+
+func (tr *TransactionRequest) Scheme() string {
+	if tr == nil {
+		return ""
+	}
+	return tr.Scheme_
 }
 
 func (tr *TransactionRequest) Headers() map[string][]string {

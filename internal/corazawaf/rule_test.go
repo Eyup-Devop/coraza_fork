@@ -345,7 +345,6 @@ func TestAddAction(t *testing.T) {
 	if rule.actions[0].Function != action {
 		t.Errorf("Expected %v, got %v", rule.actions[0].Function, action)
 	}
-
 }
 
 func TestAddTransformation(t *testing.T) {
@@ -415,6 +414,7 @@ func TestExecuteTransformations(t *testing.T) {
 var transformationErrorA = func(input string) (string, bool, error) {
 	return "", false, errors.New("errorA")
 }
+
 var transformationErrorB = func(input string) (string, bool, error) {
 	return "", false, errors.New("errorB")
 }
@@ -576,7 +576,7 @@ func TestExpandMacroAfterWholeRuleEvaluation(t *testing.T) {
 
 	r.Chain = chainedRule
 	tx := NewWAF().NewTransaction()
-	tx.ProcessURI("0", "GET", "HTTP/1.1")
+	tx.ProcessURI("0", "GET", "HTTP/1.1", "HTTP")
 	tx.AddGetRequestArgument("test", "0")
 
 	var matchedValues []types.MatchData

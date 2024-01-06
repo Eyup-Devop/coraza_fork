@@ -49,10 +49,11 @@ func (_ legacyJSONFormatter) Format(al plugintypes.AuditLog) ([]byte, error) {
 		}
 		al2.Request = &logLegacyRequest{
 			RequestLine: fmt.Sprintf(
-				"%s %s %s",
+				"%s %s %s %s",
 				al.Transaction().Request().Method(),
 				al.Transaction().Request().URI(),
 				al.Transaction().Request().HTTPVersion(),
+				al.Transaction().Request().Scheme(),
 			),
 			Headers: reqHeaders,
 		}

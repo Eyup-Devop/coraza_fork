@@ -10,6 +10,7 @@ import (
 	"io"
 	"math"
 	"mime"
+	"net"
 	"net/url"
 	"path/filepath"
 	"strconv"
@@ -407,7 +408,7 @@ func (tx *Transaction) ParseRequestReader(data io.Reader) (*types.Interruption, 
 	if len(spl) != 3 {
 		return nil, fmt.Errorf("invalid request line")
 	}
-	tx.ProcessURI(spl[1], spl[0], spl[2])
+	tx.ProcessURI(spl[1], spl[0], spl[2], "")
 	for scanner.Scan() {
 		l := scanner.Text()
 		if l == "" {
@@ -531,7 +532,6 @@ func (tx *Transaction) MatchRule(r *Rule, mds []types.MatchData) {
 	if tx.WAF.ErrorLogCb != nil && r.Log {
 		tx.WAF.ErrorLogCb(mr)
 	}
-
 }
 
 // GetStopWatch is used to debug phase durations
@@ -645,6 +645,29 @@ func (tx *Transaction) ProcessConnection(client string, cPort int, server string
 	tx.variables.serverPort.Set(p2)
 }
 
+// ProcessGeoIP should be called at very beginning of a request process, it is
+// expected to set GEO variables, when the
+// connection arrives on the server.
+func (tx *Transaction) ProcessGeoIP(client string) {
+	if tx.WAF.GeoLookupDB != nil {
+		result, err := tx.WAF.GeoLookupDB.City(net.ParseIP(client))
+		var subdivision []string = []string{}
+		for _, v := range result.Subdivisions {
+			subdivision = append(subdivision, v.Names["en"])
+		}
+		if err == nil {
+			tx.variables.geo.Set("country_code", []string{result.Country.IsoCode})
+			tx.variables.geo.Set("country_name", []string{result.Country.Names["en"]})
+			tx.variables.geo.Set("country_continent", []string{result.Continent.Names["en"]})
+			tx.variables.geo.Set("region", subdivision)
+			tx.variables.geo.Set("city", []string{result.City.Names["en"]})
+			tx.variables.geo.Set("postal_code", []string{result.Postal.Code})
+			tx.variables.geo.Set("latitude", []string{strconv.FormatFloat(result.Location.Latitude, 'f', 10, 64)})
+			tx.variables.geo.Set("longitude", []string{strconv.FormatFloat(result.Location.Longitude, 'f', 10, 64)})
+		}
+	}
+}
+
 // ExtractGetArguments transforms an url encoded string to a map and creates ARGS_GET
 func (tx *Transaction) ExtractGetArguments(uri string) {
 	data := urlutil.ParseQuery(uri, '&')
@@ -704,13 +727,14 @@ func (tx *Transaction) AddResponseArgument(key string, value string) {
 // phase 1 and 2.
 //
 // note: This function won't add GET arguments, they must be added with AddArgument
-func (tx *Transaction) ProcessURI(uri string, method string, httpVersion string) {
+func (tx *Transaction) ProcessURI(uri string, method string, httpVersion string, scheme string) {
 	tx.variables.requestMethod.Set(method)
 	tx.variables.requestProtocol.Set(httpVersion)
 	tx.variables.requestURIRaw.Set(uri)
+	tx.variables.requestScheme.Set(scheme)
 
 	// TODO modsecurity uses HTTP/${VERSION} instead of just version, let's check it out
-	tx.variables.requestLine.Set(fmt.Sprintf("%s %s %s", method, uri, httpVersion))
+	tx.variables.requestLine.Set(fmt.Sprintf("%s %s %s %s", method, uri, httpVersion, scheme))
 
 	var err error
 
@@ -1353,16 +1377,31 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 		ID_:            tx.id,
 		ClientIP_:      tx.variables.remoteAddr.Get(),
 		ClientPort_:    clientPort,
-		HostIP_:        tx.variables.serverAddr.Get(),
-		HostPort_:      hostPort,
-		ServerID_:      tx.variables.serverName.Get(), // TODO check
+		GeoIPInformation_: &auditlog.GeoIPInformation{
+			CountryCode_: strings.Join(tx.variables.geo.Get("country_code"), ","),
+			CountryName_: strings.Join(tx.variables.geo.Get("country_name"), ","),
+			Continent_:   strings.Join(tx.variables.geo.Get("country_continent"), ","),
+			Subdivision_: strings.Join(tx.variables.geo.Get("region"), ","),
+			City_:        strings.Join(tx.variables.geo.Get("city"), ","),
+			PostalCode_:  strings.Join(tx.variables.geo.Get("postal_code"), ","),
+			Latitude_:    strings.Join(tx.variables.geo.Get("latitude"), ","),
+			Longitude_:   strings.Join(tx.variables.geo.Get("longitude"), ","),
+		},
+		HostIP_:   tx.variables.serverAddr.Get(),
+		HostPort_: hostPort,
+		ServerID_: tx.variables.serverName.Get(), // TODO check
 	}
 
 	for _, part := range tx.AuditLogParts {
 		switch part {
 		case types.AuditLogPartRequestHeaders:
 			if al.Transaction_.Request_ == nil {
-				al.Transaction_.Request_ = &auditlog.TransactionRequest{}
+				al.Transaction_.Request_ = &auditlog.TransactionRequest{
+					Method_:   tx.variables.requestMethod.Get(),
+					Protocol_: tx.variables.requestProtocol.Get(),
+					URI_:      tx.variables.requestURI.Get(),
+					Scheme_:   tx.variables.requestScheme.Get(),
+				}
 			}
 			al.Transaction_.Request_.Headers_ = tx.variables.requestHeaders.Data()
 		case types.AuditLogPartRequestBody:
@@ -1408,6 +1447,7 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 			if al.Transaction_.Response_ == nil {
 				al.Transaction_.Response_ = &auditlog.TransactionResponse{}
 			}
+			al.Transaction_.Response_.Protocol_ = tx.variables.responseProtocol.Get()
 			status, _ := strconv.Atoi(tx.variables.responseStatus.Get())
 			al.Transaction_.Response_.Status_ = status
 			al.Transaction_.Response_.Headers_ = tx.variables.responseHeaders.Data()
@@ -1577,6 +1617,7 @@ type TransactionVariables struct {
 	requestLine              *collections.Single
 	requestMethod            *collections.Single
 	requestProtocol          *collections.Single
+	requestScheme            *collections.Single
 	requestURI               *collections.Single
 	requestURIRaw            *collections.Single
 	requestXML               *collections.Map
@@ -1633,6 +1674,7 @@ func NewTransactionVariables() *TransactionVariables {
 	v.requestLine = collections.NewSingle(variables.RequestLine)
 	v.requestMethod = collections.NewSingle(variables.RequestMethod)
 	v.requestProtocol = collections.NewSingle(variables.RequestProtocol)
+	v.requestScheme = collections.NewSingle(variables.RequestScheme)
 	v.requestURI = collections.NewSingle(variables.RequestURI)
 	v.requestURIRaw = collections.NewSingle(variables.RequestURIRaw)
 	v.responseBody = collections.NewSingle(variables.ResponseBody)

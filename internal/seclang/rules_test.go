@@ -67,14 +67,13 @@ func TestSecMarkers(t *testing.T) {
 	waf := corazawaf.NewWAF()
 	parser := NewParser(waf)
 	err := parser.FromString(`
-		SecRuleEngine On		
+		SecRuleEngine On
 		SecAction "phase:1, id:1,log,skipAfter:SoMe_TEST"
 		SecAction "phase:1, id:2,deny,status:403"
 
 		SecMarker SoMe_TEST
 		SecAction "phase:2, id:3,deny,status:403,log"
 	`)
-
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -136,7 +135,7 @@ func TestSecAuditLogs(t *testing.T) {
 		t.Error(err)
 	}
 	tx := waf.NewTransaction()
-	tx.ProcessURI("/test.php?id=1", "get", "http/1.1")
+	tx.ProcessURI("/test.php?id=1", "get", "http/1.1", "HTTP")
 	tx.ProcessRequestHeaders()
 	if _, err := tx.ProcessRequestBody(); err != nil {
 		t.Error(err)
@@ -390,7 +389,7 @@ func TestSampleRxRule(t *testing.T) {
 		t.Error(err.Error())
 	}
 	tx := waf.NewTransaction()
-	tx.ProcessURI("/test", "GET", "HTTP/1.1")
+	tx.ProcessURI("/test", "GET", "HTTP/1.1", "HTTP")
 	tx.AddRequestHeader("Content-Length", "15")
 	if it := tx.ProcessRequestHeaders(); it == nil {
 		t.Error("failed to interrupt")
@@ -905,7 +904,6 @@ func TestParameterPollution(t *testing.T) {
 		t.Errorf("failed to test arguments pollution: Multiple match mixed case: %d, %+v\n",
 			len(tx.MatchedRules()), tx.MatchedRules())
 	}
-
 }
 
 func TestURIQueryParamCaseSensitive(t *testing.T) {
@@ -920,7 +918,7 @@ func TestURIQueryParamCaseSensitive(t *testing.T) {
 	}
 
 	tx := waf.NewTransaction()
-	tx.ProcessURI("/url?Test1='SQLI", "POST", "HTTP/1.1")
+	tx.ProcessURI("/url?Test1='SQLI", "POST", "HTTP/1.1", "HTTP")
 	tx.ProcessRequestHeaders()
 	_, err = tx.ProcessRequestBody()
 	if err != nil {
@@ -941,7 +939,7 @@ func TestURIQueryParamCaseSensitive(t *testing.T) {
 	}
 
 	tx = waf.NewTransaction()
-	tx.ProcessURI("/test?test1='SQLI&Test1='SQLI&TEST1='SQLI", "POST", "HTTP/1.1")
+	tx.ProcessURI("/test?test1='SQLI&Test1='SQLI&TEST1='SQLI", "POST", "HTTP/1.1", "HTTP")
 	tx.ProcessRequestHeaders()
 	_, err = tx.ProcessRequestBody()
 	if err != nil {
