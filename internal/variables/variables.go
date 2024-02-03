@@ -158,6 +158,8 @@ const (
 	ResBodyProcessor
 	// Geo contains the location information of the client
 	Geo
+	// CountryCode contains the country code information of the client
+	CountryCode
 	// RequestCookiesNames contains the names of the request cookies
 	RequestCookiesNames
 	// FilesTmpNames contains the names of the uploaded temporal files

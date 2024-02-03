@@ -241,6 +241,8 @@ func (tx *Transaction) Collection(idx variables.RuleVariable) collection.Collect
 		return tx.variables.responseHeaders
 	case variables.Geo:
 		return tx.variables.geo
+	case variables.CountryCode:
+		return tx.variables.countryCode
 	case variables.RequestCookiesNames:
 		return tx.variables.requestCookiesNames
 	case variables.FilesTmpNames:
@@ -664,6 +666,8 @@ func (tx *Transaction) ProcessGeoIP(client string) {
 			tx.variables.geo.Set("postal_code", []string{result.Postal.Code})
 			tx.variables.geo.Set("latitude", []string{strconv.FormatFloat(result.Location.Latitude, 'f', 10, 64)})
 			tx.variables.geo.Set("longitude", []string{strconv.FormatFloat(result.Location.Longitude, 'f', 10, 64)})
+
+			tx.variables.countryCode.Set(result.Country.IsoCode)
 		}
 	}
 }
@@ -1586,6 +1590,7 @@ type TransactionVariables struct {
 	filesTmpNames            *collections.Map
 	fullRequestLength        *collections.Single
 	geo                      *collections.Map
+	countryCode              *collections.Single
 	highestSeverity          *collections.Single
 	inboundDataError         *collections.Single
 	matchedVar               *collections.Single

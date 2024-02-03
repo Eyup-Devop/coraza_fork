@@ -157,6 +157,8 @@ const (
 	ResponseHeaders = variables.ResponseHeaders
 	// Geo contains the location information of the client
 	Geo = variables.Geo
+	// CountryCode is the country code of the location information of the client
+	CountryCode = variables.CountryCode
 	// RequestCookiesNames contains the names of the request cookies
 	RequestCookiesNames = variables.RequestCookiesNames
 	// FilesTmpNames contains the names of the uploaded temporal files
