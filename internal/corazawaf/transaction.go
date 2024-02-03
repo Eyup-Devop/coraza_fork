@@ -1712,6 +1712,7 @@ func NewTransactionVariables() *TransactionVariables {
 	v.responseHeadersNames = v.responseHeaders.Names(variables.ResponseHeadersNames)
 	v.resBodyProcessor = collections.NewSingle(variables.ResBodyProcessor)
 	v.geo = collections.NewMap(variables.Geo)
+	v.countryCode = collections.NewSingle(variables.CountryCode)
 	v.tx = collections.NewMap(variables.TX)
 	v.rule = collections.NewMap(variables.Rule)
 	v.env = collections.NewMap(variables.Env)
@@ -1943,6 +1944,10 @@ func (v *TransactionVariables) Geo() collection.Map {
 	return v.geo
 }
 
+func (v *TransactionVariables) CountryCode() collection.Single {
+	return v.countryCode
+}
+
 func (v *TransactionVariables) Files() collection.Map {
 	return v.files
 }
@@ -2104,6 +2109,9 @@ func (v *TransactionVariables) All(f func(v variables.RuleVariable, col collecti
 		return
 	}
 	if !f(variables.Geo, v.geo) {
+		return
+	}
+	if !f(variables.CountryCode, v.countryCode) {
 		return
 	}
 	if !f(variables.HighestSeverity, v.highestSeverity) {
