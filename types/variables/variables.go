@@ -159,6 +159,8 @@ const (
 	Geo = variables.Geo
 	// CountryCode is the country code of the location information of the client
 	CountryCode = variables.CountryCode
+	// CountryName is the country name of the location information of the client
+	CountryName = variables.CountryName
 	// RequestCookiesNames contains the names of the request cookies
 	RequestCookiesNames = variables.RequestCookiesNames
 	// FilesTmpNames contains the names of the uploaded temporal files

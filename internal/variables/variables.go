@@ -160,6 +160,8 @@ const (
 	Geo
 	// CountryCode contains the country code information of the client
 	CountryCode
+	// CountryName contains the country code information of the client
+	CountryName
 	// RequestCookiesNames contains the names of the request cookies
 	RequestCookiesNames
 	// FilesTmpNames contains the names of the uploaded temporal files

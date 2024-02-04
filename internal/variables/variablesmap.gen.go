@@ -132,6 +132,8 @@ func (v RuleVariable) Name() string {
 		return "GEO"
 	case CountryCode:
 		return "COUNTRY_CODE"
+	case CountryName:
+		return "COUNTRY_NAME"
 	case RequestCookiesNames:
 		return "REQUEST_COOKIES_NAMES"
 	case FilesTmpNames:
@@ -274,6 +276,7 @@ var rulemapRev = map[string]RuleVariable{
 	"RES_BODY_PROCESSOR":               ResBodyProcessor,
 	"GEO":                              Geo,
 	"COUNTRY_CODE":                     CountryCode,
+	"COUNTRY_NAME":                     CountryName,
 	"REQUEST_COOKIES_NAMES":            RequestCookiesNames,
 	"FILES_TMPNAMES":                   FilesTmpNames,
 	"ARGS_NAMES":                       ArgsNames,

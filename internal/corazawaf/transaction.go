@@ -243,6 +243,8 @@ func (tx *Transaction) Collection(idx variables.RuleVariable) collection.Collect
 		return tx.variables.geo
 	case variables.CountryCode:
 		return tx.variables.countryCode
+	case variables.CountryName:
+		return tx.variables.countryName
 	case variables.RequestCookiesNames:
 		return tx.variables.requestCookiesNames
 	case variables.FilesTmpNames:
@@ -668,6 +670,7 @@ func (tx *Transaction) ProcessGeoIP(client string) {
 			tx.variables.geo.Set("longitude", []string{strconv.FormatFloat(result.Location.Longitude, 'f', 10, 64)})
 
 			tx.variables.countryCode.Set(result.Country.IsoCode)
+			tx.variables.countryName.Set(result.Country.Names["en"])
 		}
 	}
 }
@@ -1591,6 +1594,7 @@ type TransactionVariables struct {
 	fullRequestLength        *collections.Single
 	geo                      *collections.Map
 	countryCode              *collections.Single
+	countryName              *collections.Single
 	highestSeverity          *collections.Single
 	inboundDataError         *collections.Single
 	matchedVar               *collections.Single
@@ -1713,6 +1717,7 @@ func NewTransactionVariables() *TransactionVariables {
 	v.resBodyProcessor = collections.NewSingle(variables.ResBodyProcessor)
 	v.geo = collections.NewMap(variables.Geo)
 	v.countryCode = collections.NewSingle(variables.CountryCode)
+	v.countryName = collections.NewSingle(variables.CountryName)
 	v.tx = collections.NewMap(variables.TX)
 	v.rule = collections.NewMap(variables.Rule)
 	v.env = collections.NewMap(variables.Env)
@@ -1948,6 +1953,10 @@ func (v *TransactionVariables) CountryCode() collection.Single {
 	return v.countryCode
 }
 
+func (v *TransactionVariables) CountryName() collection.Single {
+	return v.countryName
+}
+
 func (v *TransactionVariables) Files() collection.Map {
 	return v.files
 }
@@ -2112,6 +2121,9 @@ func (v *TransactionVariables) All(f func(v variables.RuleVariable, col collecti
 		return
 	}
 	if !f(variables.CountryCode, v.countryCode) {
+		return
+	}
+	if !f(variables.CountryName, v.countryName) {
 		return
 	}
 	if !f(variables.HighestSeverity, v.highestSeverity) {
