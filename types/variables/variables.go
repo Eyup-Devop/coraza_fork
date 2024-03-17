@@ -162,6 +162,7 @@ const (
 	// CountryName is the country name of the location information of the client
 	CountryName = variables.CountryName
 	// RequestCookiesNames contains the names of the request cookies
+	// RequestCookiesNames contains the names of the request cookies
 	RequestCookiesNames = variables.RequestCookiesNames
 	// FilesTmpNames contains the names of the uploaded temporal files
 	FilesTmpNames = variables.FilesTmpNames

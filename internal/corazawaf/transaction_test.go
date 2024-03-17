@@ -163,10 +163,11 @@ func TestWriteRequestBody(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name                   string
-		requestBodyLimit       int
-		requestBodyLimitAction types.BodyLimitAction
-		shouldInterrupt        bool
+		name                            string
+		requestBodyLimit                int
+		requestBodyLimitAction          types.BodyLimitAction
+		avoidRequestBodyLimitActionInit bool
+		shouldInterrupt                 bool
 	}{
 		{
 			name:                   "LimitNotReached",
@@ -178,6 +179,14 @@ func TestWriteRequestBody(t *testing.T) {
 			requestBodyLimit:       urlencodedBodyLen - 3,
 			requestBodyLimitAction: types.BodyLimitActionReject,
 			shouldInterrupt:        true,
+		},
+		{
+			name:             "LimitReachedAndRejectsDefaultValue",
+			requestBodyLimit: urlencodedBodyLen - 3,
+			// Omitting requestBodyLimitAction defaults to Reject
+			// requestBodyLimitAction: types.BodyLimitActionReject,
+			avoidRequestBodyLimitActionInit: true,
+			shouldInterrupt:                 true,
 		},
 		{
 			name:                   "LimitReachedAndPartialProcessing",
@@ -202,8 +211,9 @@ func TestWriteRequestBody(t *testing.T) {
 							waf.RuleEngine = types.RuleEngineOn
 							waf.RequestBodyAccess = true
 							waf.RequestBodyLimit = int64(testCase.requestBodyLimit)
-							waf.RequestBodyLimitAction = testCase.requestBodyLimitAction
-
+							if !testCase.avoidRequestBodyLimitActionInit {
+								waf.RequestBodyLimitAction = testCase.requestBodyLimitAction
+							}
 							tx := waf.NewTransaction()
 							tx.AddRequestHeader("content-type", "application/x-www-form-urlencoded")
 
@@ -470,6 +480,12 @@ func TestWriteResponseBody(t *testing.T) {
 			name:                    "LimitReachedAndPartialProcessing",
 			responseBodyLimit:       urlencodedBodyLen - 3,
 			responseBodyLimitAction: types.BodyLimitActionProcessPartial,
+		},
+		{
+			name:              "LimitReachedAndPartialProcessingDefaultValue",
+			responseBodyLimit: urlencodedBodyLen - 3,
+			// Omitting requestBodyLimitAction defaults to ProcessPartial
+			// responseBodyLimitAction: types.BodyLimitActionProcessPartial,
 		},
 	}
 
@@ -1165,7 +1181,7 @@ func TestTxProcessURI(t *testing.T) {
 	waf := NewWAF()
 	tx := waf.NewTransaction()
 	uri := "http://example.com/path/to/file.html?query=string&other=value"
-	tx.ProcessURI(uri, "GET", "HTTP/1.1", "HTTP")
+	tx.ProcessURI(uri, "GET", "HTTP/1.1", "")
 	if s := tx.variables.requestURI.Get(); s != uri {
 		t.Errorf("failed to set request uri, got %s", s)
 	}

@@ -5,6 +5,7 @@ package corazawaf
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -42,6 +43,9 @@ import (
 type Transaction struct {
 	// Transaction ID
 	id string
+
+	// The context associated to the transaction.
+	context context.Context
 
 	// Contains the list of matched rules and associated match information
 	matchedRules []types.MatchedRule
@@ -506,6 +510,7 @@ func (tx *Transaction) MatchRule(r *Rule, mds []types.MatchData) {
 		Rule_:            &r.RuleMetadata,
 		Log_:             r.Log,
 		MatchedDatas_:    mds,
+		Context_:         tx.context,
 	}
 	// Populate MatchedRule disruption related fields only if the Engine is capable of performing disruptive actions
 	if tx.RuleEngine == types.RuleEngineOn {
@@ -1397,6 +1402,12 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 		HostIP_:   tx.variables.serverAddr.Get(),
 		HostPort_: hostPort,
 		ServerID_: tx.variables.serverName.Get(), // TODO check
+		Request_: &auditlog.TransactionRequest{
+			Method_:   tx.variables.requestMethod.Get(),
+			URI_:      tx.variables.requestURI.Get(),
+			Protocol_: tx.variables.requestProtocol.Get(),
+			Scheme_:   tx.variables.requestScheme.Get(),
+		},
 	}
 
 	for _, part := range tx.AuditLogParts {
@@ -1412,12 +1423,13 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 			}
 			al.Transaction_.Request_.Headers_ = tx.variables.requestHeaders.Data()
 		case types.AuditLogPartRequestBody:
-			if al.Transaction_.Request_ == nil {
-				al.Transaction_.Request_ = &auditlog.TransactionRequest{}
+			reader, err := tx.requestBodyBuffer.Reader()
+			if err == nil {
+				content, err := io.ReadAll(reader)
+				if err == nil {
+					al.Transaction_.Request_.Body_ = string(content)
+				}
 			}
-			// TODO maybe change to:
-			// al.Transaction.Request.Body = tx.RequestBodyBuffer.String()
-			al.Transaction_.Request_.Body_ = tx.variables.requestBody.Get()
 
 			/*
 			* TODO:
@@ -1863,6 +1875,10 @@ func (v *TransactionVariables) RequestMethod() collection.Single {
 
 func (v *TransactionVariables) RequestProtocol() collection.Single {
 	return v.requestProtocol
+}
+
+func (v *TransactionVariables) RequestScheme() collection.Single {
+	return v.requestScheme
 }
 
 func (v *TransactionVariables) RequestURI() collection.Single {
