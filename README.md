@@ -1,5 +1,5 @@
 <h1>
-  <img src="https://coraza.io/images/logo_shield_only.png" align="left" height="46px" alt=""/>&nbsp;
+  <img src="https://coraza.io/images/logo_shield_only.png" align="left" height="32px" alt=""/>&nbsp;
   <span>Coraza - Web Application Firewall</span>
 </h1>
 
