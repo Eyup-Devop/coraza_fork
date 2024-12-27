@@ -9,11 +9,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/oschwald/geoip2-golang"
+
 	"github.com/corazawaf/coraza/v3/experimental"
 	"github.com/corazawaf/coraza/v3/internal/corazawaf"
+	"github.com/corazawaf/coraza/v3/internal/environment"
 	"github.com/corazawaf/coraza/v3/internal/seclang"
 	"github.com/corazawaf/coraza/v3/types"
-	"github.com/oschwald/geoip2-golang"
 )
 
 // WAF instance is used to store configurations and rules
@@ -34,6 +36,12 @@ func NewWAF(config WAFConfig) (WAF, error) {
 	c := config.(*wafConfig)
 
 	waf := corazawaf.NewWAF()
+
+	if environment.HasAccessToFS {
+		if err := environment.IsDirWritable(waf.TmpDir); err != nil {
+			return nil, fmt.Errorf("filesystem access check: %w. Use 'no_fs_access' build tag, if not available", err)
+		}
+	}
 
 	if c.geoip2file != "" {
 		var (

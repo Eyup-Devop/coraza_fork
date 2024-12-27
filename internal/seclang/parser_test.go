@@ -10,9 +10,13 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	coreruleset "github.com/corazawaf/coraza-coreruleset"
 	coraza "github.com/corazawaf/coraza/v3/internal/corazawaf"
+	"github.com/jcchavezs/mergefs"
+	"github.com/jcchavezs/mergefs/io"
 )
 
 //go:embed testdata
@@ -100,6 +104,40 @@ func TestLoadConfigurationFile(t *testing.T) {
 	}
 }
 
+// Connectors are supporting embedding github.com/corazawaf/coraza-coreruleset to ease CRS integration
+// mergefs.Merge is used to combine both CRS and local files. This test is to ensure that the parser
+// is able to load configuration files from both filesystems.
+func TestLoadConfigurationFileWithMultiFs(t *testing.T) {
+	waf := coraza.NewWAF()
+	p := NewParser(waf)
+	p.SetRoot(mergefs.Merge(coreruleset.FS, io.OSFS))
+
+	err := p.FromFile("../../coraza.conf-recommended")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err.Error())
+	}
+
+	err = p.FromFile("../doesnotexist.conf")
+	// Go and TinyGo have different error messages
+	if !strings.Contains(err.Error(), "no such file or directory") && !strings.Contains(err.Error(), "file does not exist") {
+		t.Errorf("expected not found error. Got: %s", err.Error())
+	}
+
+	err = p.FromFile("/tmp/doesnotexist.conf")
+	if !strings.Contains(err.Error(), "no such file or directory") && !strings.Contains(err.Error(), "file does not exist") {
+		t.Errorf("expected not found error. Got: %s", err.Error())
+	}
+
+	err = p.FromFile("./testdata/glob/*.conf")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err.Error())
+	}
+
+	if err := p.FromString("Include @owasp_crs/REQUEST-911-METHOD-ENFORCEMENT.conf"); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestHardcodedIncludeDirective(t *testing.T) {
 	waf := coraza.NewWAF()
 	p := NewParser(waf)
@@ -166,6 +204,10 @@ func TestHardcodedIncludeDirectiveDDOS2(t *testing.T) {
 		t.Fatal(err)
 	}
 	tmpFile2, err := os.Create(filepath.Join(t.TempDir(), "rand2.conf"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = tmpFile2.Close()
 	if err != nil {
 		t.Fatal(err)
 	}

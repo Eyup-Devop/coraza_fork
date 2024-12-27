@@ -1,4 +1,4 @@
-// Copyright 2022 Juan Pablo Tosso and the OWASP Coraza contributors
+// Copyright 2024 Juan Pablo Tosso and the OWASP Coraza contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package auditlog
@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 
 	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
+	"github.com/corazawaf/coraza/v3/internal/collections"
 	"github.com/corazawaf/coraza/v3/types"
 )
 
@@ -85,6 +86,8 @@ type Transaction struct {
 	Request_          *TransactionRequest  `json:"request,omitempty"`
 	Response_         *TransactionResponse `json:"response,omitempty"`
 	Producer_         *TransactionProducer `json:"producer,omitempty"`
+	HighestSeverity_  string               `json:"highest_severity"`
+	IsInterrupted_    bool                 `json:"is_interrupted"`
 }
 
 var _ plugintypes.AuditLogTransaction = Transaction{}
@@ -145,15 +148,12 @@ func (t Transaction) Producer() plugintypes.AuditLogTransactionProducer {
 	return t.Producer_
 }
 
-type GeoIPInformation struct {
-	CountryCode_ string `json:"country_code,omitempty"`
-	CountryName_ string `json:"country_name,omitempty"`
-	Continent_   string `json:"continent,omitempty"`
-	Subdivision_ string `json:"subdivision,omitempty"`
-	City_        string `json:"city,omitempty"`
-	PostalCode_  string `json:"postal_code,omitempty"`
-	Latitude_    string `json:"latitude,omitempty"`
-	Longitude_   string `json:"longitude,omitempty"`
+func (t Transaction) HighestSeverity() string {
+	return t.HighestSeverity_
+}
+
+func (t Transaction) IsInterrupted() bool {
+	return t.IsInterrupted_
 }
 
 var _ plugintypes.AuditLogGeoIPInformation = (*GeoIPInformation)(nil)
@@ -188,6 +188,17 @@ func (tGeo *GeoIPInformation) Latitude() string {
 
 func (tGeo *GeoIPInformation) Longitude() string {
 	return tGeo.Longitude_
+}
+
+type GeoIPInformation struct {
+	CountryCode_ string `json:"country_code,omitempty"`
+	CountryName_ string `json:"country_name,omitempty"`
+	Continent_   string `json:"continent,omitempty"`
+	Subdivision_ string `json:"subdivision,omitempty"`
+	City_        string `json:"city,omitempty"`
+	PostalCode_  string `json:"postal_code,omitempty"`
+	Latitude_    string `json:"latitude,omitempty"`
+	Longitude_   string `json:"longitude,omitempty"`
 }
 
 // TransactionResponse contains response specific
@@ -247,26 +258,50 @@ type TransactionProducer struct {
 var _ plugintypes.AuditLogTransactionProducer = (*TransactionProducer)(nil)
 
 func (tp *TransactionProducer) Connector() string {
+	if tp == nil {
+		return ""
+	}
+
 	return tp.Connector_
 }
 
 func (tp *TransactionProducer) Version() string {
+	if tp == nil {
+		return ""
+	}
+
 	return tp.Version_
 }
 
 func (tp *TransactionProducer) Server() string {
+	if tp == nil {
+		return ""
+	}
+
 	return tp.Server_
 }
 
 func (tp *TransactionProducer) RuleEngine() string {
+	if tp == nil {
+		return ""
+	}
+
 	return tp.RuleEngine_
 }
 
 func (tp *TransactionProducer) Stopwatch() string {
+	if tp == nil {
+		return ""
+	}
+
 	return tp.Stopwatch_
 }
 
 func (tp *TransactionProducer) Rulesets() []string {
+	if tp == nil {
+		return nil
+	}
+
 	return tp.Rulesets_
 }
 
@@ -276,11 +311,20 @@ type TransactionRequest struct {
 	Method_      string                                        `json:"method"`
 	Protocol_    string                                        `json:"protocol"`
 	URI_         string                                        `json:"uri"`
-	HTTPVersion_ string                                        `json:"http_version,omitempty"`
+	HTTPVersion_ string                                        `json:"http_version"`
 	Scheme_      string                                        `json:"scheme"`
 	Headers_     map[string][]string                           `json:"headers"`
 	Body_        string                                        `json:"body"`
 	Files_       []plugintypes.AuditLogTransactionRequestFiles `json:"files"`
+	Args_        *collections.ConcatKeyed                      `json:"args"`
+	Length_      int32                                         `json:"length"`
+}
+
+func (tr *TransactionRequest) Scheme() string {
+	if tr == nil {
+		return ""
+	}
+	return tr.Scheme_
 }
 
 var _ plugintypes.AuditLogTransactionRequest = (*TransactionRequest)(nil)
@@ -313,13 +357,6 @@ func (tr *TransactionRequest) HTTPVersion() string {
 	return tr.HTTPVersion_
 }
 
-func (tr *TransactionRequest) Scheme() string {
-	if tr == nil {
-		return ""
-	}
-	return tr.Scheme_
-}
-
 func (tr *TransactionRequest) Headers() map[string][]string {
 	if tr == nil {
 		return nil
@@ -342,6 +379,21 @@ func (tr *TransactionRequest) Files() []plugintypes.AuditLogTransactionRequestFi
 	}
 
 	return tr.Files_
+}
+
+func (tr *TransactionRequest) Args() *collections.ConcatKeyed {
+	if tr == nil {
+		return &collections.ConcatKeyed{}
+	}
+
+	return tr.Args_
+}
+
+func (tr *TransactionRequest) Length() int32 {
+	if tr == nil {
+		return 0
+	}
+	return tr.Length_
 }
 
 // TransactionRequestFiles contains information

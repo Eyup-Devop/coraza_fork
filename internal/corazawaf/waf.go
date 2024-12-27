@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/oschwald/geoip2-golang"
+
 	"github.com/corazawaf/coraza/v3/debuglog"
 	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
 	"github.com/corazawaf/coraza/v3/internal/auditlog"
@@ -21,7 +23,6 @@ import (
 	stringutils "github.com/corazawaf/coraza/v3/internal/strings"
 	"github.com/corazawaf/coraza/v3/internal/sync"
 	"github.com/corazawaf/coraza/v3/types"
-	"github.com/oschwald/geoip2-golang"
 )
 
 // WAF instance is used to store configurations and rules
@@ -120,6 +121,9 @@ type WAF struct {
 	// Array of logging parts to be used
 	AuditLogParts types.AuditLogParts
 
+	// Audit log format
+	AuditLogFormat string
+
 	// Contains the regular expression for relevant status audit logging
 	AuditLogRelevantStatus *regexp.Regexp
 
@@ -178,6 +182,7 @@ func (w *WAF) newTransaction(opts Options) *Transaction {
 	tx.SkipAfter = ""
 	tx.AuditEngine = w.AuditEngine
 	tx.AuditLogParts = w.AuditLogParts
+	tx.AuditLogFormat = w.AuditLogFormat
 	tx.ForceRequestBodyVariable = false
 	tx.RequestBodyAccess = w.RequestBodyAccess
 	tx.RequestBodyLimit = int64(w.RequestBodyLimit)
@@ -242,6 +247,7 @@ func (w *WAF) newTransaction(opts Options) *Transaction {
 	tx.variables.duration.Set("0")
 	tx.variables.highestSeverity.Set("0")
 	tx.variables.uniqueID.Set(tx.id)
+	tx.setTimeVariables()
 
 	tx.debugLogger.Debug().Msg("Transaction started")
 
@@ -309,8 +315,9 @@ func NewWAF() *WAF {
 			types.AuditLogPartResponseHeaders,
 			types.AuditLogPartAuditLogTrailer,
 		},
-		Logger:        logger,
-		ArgumentLimit: 1000,
+		AuditLogFormat: "Native",
+		Logger:         logger,
+		ArgumentLimit:  1000,
 	}
 
 	if environment.HasAccessToFS {

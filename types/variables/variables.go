@@ -162,7 +162,6 @@ const (
 	// CountryName is the country name of the location information of the client
 	CountryName = variables.CountryName
 	// RequestCookiesNames contains the names of the request cookies
-	// RequestCookiesNames contains the names of the request cookies
 	RequestCookiesNames = variables.RequestCookiesNames
 	// FilesTmpNames contains the names of the uploaded temporal files
 	FilesTmpNames = variables.FilesTmpNames
@@ -201,6 +200,26 @@ const (
 	ResBodyProcessorError = variables.ResBodyProcessorError
 	// ResBodyProcessorErrorMsg contains the error message if the response body processor failed
 	ResBodyProcessorErrorMsg = variables.ResBodyProcessorErrorMsg
+	// MultipartStrictError will be set to 1 when there is an error parsing multipart
+	MultipartStrictError = variables.MultipartStrictError
+	// Time holds a formatted string representing the time (hour:minute:second).
+	Time = variables.Time
+	// TimeDay holds the current day of the month (1-31)
+	TimeDay = variables.TimeDay
+	// TimeEpoch holds the time in seconds since 1970
+	TimeEpoch = variables.TimeEpoch
+	// TimeHour holds the current hour of the day (0-23)
+	TimeHour = variables.TimeHour
+	// TimeMin holds the current minute of the hour (0-59)
+	TimeMin = variables.TimeMin
+	// TimeMon holds the current month of the year (0-11)
+	TimeMon = variables.TimeMon
+	// TimeSec holds the current second of the minute (0-59)
+	TimeSec = variables.TimeSec
+	// TimeWday holds the current weekday value (1–7), where Monday is 1
+	TimeWday = variables.TimeWday
+	// TimeYear the current four-digit year value
+	TimeYear = variables.TimeYear
 )
 
 // Parse returns the byte interpretation
